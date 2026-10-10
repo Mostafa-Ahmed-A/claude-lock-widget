@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run tests (Windows PowerShell 5.1)
+        shell: powershell
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File tests/run-tests.ps1
+
+      - name: Render the widget tile (smoke test)
+        shell: powershell
+        run: |
+          $env:CLW_HOME = Join-Path $env:RUNNER_TEMP 'clw'
+          powershell -NoProfile -ExecutionPolicy Bypass -File src/ClaudeLockWidget.ps1 preview -Demo -NoOpen -Out "$env:RUNNER_TEMP\demo.png"
+          if (-not (Test-Path "$env:RUNNER_TEMP\demo.png")) { throw 'preview was not written' }
+
+      - name: Upload demo tile
+        uses: actions/upload-artifact@v4
+        with:
+          name: demo-tile
+          path: ${{ runner.temp }}/demo.png
+
+  package:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and sign the widget package (ephemeral certificate)
+        shell: powershell
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File widget/Build-Widget.ps1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: widget-package
+          path: |
+            widget/dist/ClaudeLockWidget.msix
+            widget/dist/ClaudeLockWidget.cer
+
+  lint:
+    runs-on: windows-latest
+    continue-on-error: true   # advisory only
+    steps:
+      - uses: actions/checkout@v4
+      - name: PSScriptAnalyzer
+        shell: powershell
+        run: |
+          Install-Module PSScriptAnalyzer -Force -Scope CurrentUser
+          Invoke-ScriptAnalyzer -Path src, widget -Recurse -Severity Error, Warning `
+            -ExcludeRule PSAvoidUsingWriteHost, PSUseShouldProcessForStateChangingFunctions, PSUseSingularNouns |
+            Format-Table -AutoSize | Out-String -Width 200

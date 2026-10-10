@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Package manifest for the Claude Lock Widget provider. Build-Widget.ps1 fills in the {{TOKENS}}.
+  The CLSID must match WidgetProvider.ClsIdText in widget\Provider\WidgetProvider.cs.
+-->
+<Package
+  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:uap3="http://schemas.microsoft.com/appx/manifest/uap/windows10/3"
+  xmlns:com="http://schemas.microsoft.com/appx/manifest/com/windows10"
+  xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+  IgnorableNamespaces="uap uap3 rescap">
+
+  <Identity Name="ClaudeLockWidget.Provider" Publisher="{{PUBLISHER}}" Version="{{VERSION}}" ProcessorArchitecture="{{ARCH}}" />
+
+  <Properties>
+    <DisplayName>Claude Lock Widget</DisplayName>
+    <PublisherDisplayName>Claude Lock Widget contributors</PublisherDisplayName>
+    <Logo>Assets\StoreLogo.png</Logo>
+  </Properties>
+
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.22000.0" MaxVersionTested="10.0.26100.0" />
+  </Dependencies>
+
+  <Resources>
+    <Resource Language="en-us" />
+  </Resources>
+
+  <Applications>
+    <Application Id="App" Executable="ClaudeLockWidget.Provider.exe" EntryPoint="Windows.FullTrustApplication">
+      <uap:VisualElements
+        DisplayName="Claude Lock Widget"
+        Description="Shows your Claude Code usage limits and activity in a lock screen widget."
+        BackgroundColor="transparent"
+        Square150x150Logo="Assets\Square150x150Logo.png"
+        Square44x44Logo="Assets\Square44x44Logo.png"
+        AppListEntry="none" />
+
+      <Extensions>
+        <!-- 1. COM server: Windows launches the exe with this argument to reach the provider -->
+        <com:Extension Category="windows.comServer">
+          <com:ComServer>
+            <com:ExeServer Executable="ClaudeLockWidget.Provider.exe" Arguments="-RegisterProcessAsComServer" DisplayName="Claude Lock Widget provider">
+              <com:Class Id="{{CLSID}}" DisplayName="Claude Lock Widget provider" />
+            </com:ExeServer>
+          </com:ComServer>
+        </com:Extension>
+
+        <!-- 2. Widget registration -->
+        <uap3:Extension Category="windows.appExtension">
+          <uap3:AppExtension Name="com.microsoft.windows.widgets" DisplayName="Claude Lock Widget" Id="ClaudeLockWidget" PublicFolder="Public">
+            <uap3:Properties>
+              <WidgetProvider>
+                <ProviderIcons>
+                  <Icon Path="Assets\ProviderIcon.png" />
+                </ProviderIcons>
+                <Activation>
+                  <CreateInstance ClassId="{{CLSID}}" />
+                </Activation>
+                <Definitions>
+                  <Definition Id="ClaudeUsage"
+                              DisplayName="Claude usage"
+                              Description="Your Claude Code plan limits and activity calendar, updated after every task."
+                              AllowMultiple="false">
+                    <Capabilities>
+                      <Capability><Size Name="small" /></Capability>
+                      <Capability><Size Name="medium" /></Capability>
+                    </Capabilities>
+                    <ThemeResources>
+                      <Icons>
+                        <Icon Path="Assets\WidgetIcon.png" />
+                      </Icons>
+                      <Screenshots>
+                        <Screenshot Path="Assets\WidgetScreenshot.png" DisplayAltText="Activity calendar with session and weekly usage bars" />
+                      </Screenshots>
+                    </ThemeResources>
+                  </Definition>
+                </Definitions>
+              </WidgetProvider>
+            </uap3:Properties>
+          </uap3:AppExtension>
+        </uap3:Extension>
+      </Extensions>
+    </Application>
+  </Applications>
+
+  <Capabilities>
+    <rescap:Capability Name="runFullTrust" />
+  </Capabilities>
+
+  <Extensions>
+    <!-- The widget types live in Microsoft.Windows.Widgets.dll shipped inside the package. -->
+    <Extension Category="windows.activatableClass.inProcessServer">
+      <InProcessServer>
+        <Path>Microsoft.Windows.Widgets.dll</Path>
+        <ActivatableClass ActivatableClassId="Microsoft.Windows.Widgets.Providers.WidgetUpdateRequestOptions" ThreadingModel="both" />
+        <ActivatableClass ActivatableClassId="Microsoft.Windows.Widgets.Providers.WidgetManager" ThreadingModel="both" />
+        <ActivatableClass ActivatableClassId="Microsoft.Windows.Widgets.Providers.WidgetResourceResponse" ThreadingModel="both" />
+        <ActivatableClass ActivatableClassId="Microsoft.Windows.Widgets.Notifications.WidgetAnnouncement" ThreadingModel="both" />
+        <ActivatableClass ActivatableClassId="Microsoft.Windows.Widgets.Feeds.Providers.FeedManager" ThreadingModel="both" />
+        <ActivatableClass ActivatableClassId="Microsoft.Windows.Widgets.Feeds.Providers.CustomQueryParametersUpdateOptions" ThreadingModel="both" />
+        <ActivatableClass ActivatableClassId="Microsoft.Windows.Widgets.Feeds.Providers.FeedResourceResponse" ThreadingModel="both" />
+        <ActivatableClass ActivatableClassId="Microsoft.Windows.Widgets.Notifications.FeedAnnouncement" ThreadingModel="both" />
+      </InProcessServer>
+    </Extension>
+  </Extensions>
+</Package>

@@ -1,0 +1,34 @@
+{
+    "refreshMinutes":  10,
+    "widgetWeeks":  30,
+    "staleAfterMinutes":  360,
+    "apiFallback":  false,
+    "position":  "auto",
+    "verticalAlign":  "center",
+    "offsetXPercent":  0,
+    "offsetYPercent":  0,
+    "scale":  1,
+    "statsRange":  "all",
+    "background":  "gradient",
+    "backgroundDim":  0.45,
+    "cardOpacity":  0.92,
+    "accent":  "#2A78D6",
+    "colorizeBars":  true,
+    "showUpdatedAt":  true,
+    "funFactBook":  "Pride and Prejudice",
+    "countMode":  "claude-code",
+    "fontFamily":  "Segoe UI",
+    "claudeConfigDir":  "",
+    "width":  0,
+    "height":  0,
+    "bars":  [
+                 {
+                     "key":  "five_hour",
+                     "label":  "Session limit"
+                 },
+                 {
+                     "key":  "seven_day",
+                     "label":  "Weekly · all models"
+                 }
+             ]
+}

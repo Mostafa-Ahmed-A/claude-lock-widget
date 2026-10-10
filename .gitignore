@@ -1,0 +1,35 @@
+# runtime data (normally lives in %LOCALAPPDATA%\ClaudeLockWidget, but just in case)
+output/
+cache/
+logs/
+*.log
+config.json
+.credentials.json
+
+# generated previews other than the curated docs images
+preview.png
+lockscreen-*.png
+
+# editors / OS
+.vs/
+.vscode/
+*.swp
+Thumbs.db
+desktop.ini
+
+# local scratch
+scratch/
+tmp/
+
+# screen recordings, signing keys and other things that must never be published
+Recordings*/
+*.mp4
+*.pfx
+*.pvk
+*.snk
+
+# widget build output
+widget/build/
+widget/dist/
+widget/Provider/bin/
+widget/Provider/obj/

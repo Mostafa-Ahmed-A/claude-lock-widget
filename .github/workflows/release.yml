@@ -1,0 +1,53 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Test
+        shell: powershell
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File tests/run-tests.ps1
+
+      # Signing: set the repository secrets CLW_PFX_BASE64 (base64 of a code-signing .pfx whose subject is
+      # CN=ClaudeLockWidget) and CLW_PFX_PASSWORD to keep one stable certificate across releases.
+      # Without them an ephemeral self-signed certificate is created (users must trust it again per release).
+      - name: Build and sign the widget package
+        shell: powershell
+        env:
+          PFX_B64: ${{ secrets.CLW_PFX_BASE64 }}
+          PFX_PASSWORD: ${{ secrets.CLW_PFX_PASSWORD }}
+        run: |
+          if ($env:PFX_B64) {
+            $pfx = Join-Path $env:RUNNER_TEMP 'sign.pfx'
+            [IO.File]::WriteAllBytes($pfx, [Convert]::FromBase64String($env:PFX_B64))
+            powershell -NoProfile -ExecutionPolicy Bypass -File widget/Build-Widget.ps1 -PfxPath $pfx -PfxPassword $env:PFX_PASSWORD
+          } else {
+            powershell -NoProfile -ExecutionPolicy Bypass -File widget/Build-Widget.ps1
+          }
+          if ($LASTEXITCODE -ne 0) { throw 'widget build failed' }
+
+      - name: Assemble ZIP
+        shell: powershell
+        run: |
+          $name = "ClaudeLockWidget-${{ github.ref_name }}"
+          $stage = Join-Path $env:RUNNER_TEMP $name
+          New-Item -ItemType Directory -Path $stage, "$stage\widget\dist" | Out-Null
+          Copy-Item src, docs, *.cmd, *.md, LICENSE, config.example.json -Destination $stage -Recurse
+          Copy-Item widget/Install-Widget.ps1, widget/README.md -Destination "$stage\widget"
+          Copy-Item widget/dist/ClaudeLockWidget.msix, widget/dist/ClaudeLockWidget.cer -Destination "$stage\widget\dist"
+          Compress-Archive -Path $stage -DestinationPath "$name.zip"
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ClaudeLockWidget-${{ github.ref_name }}.zip
+          generate_release_notes: true
