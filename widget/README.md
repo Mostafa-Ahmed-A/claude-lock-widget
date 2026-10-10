@@ -28,6 +28,18 @@ powershell -ExecutionPolicy Bypass -File widget\dist\Install-Widget.ps1
 
 The package is **self-contained**: the target PC needs neither the .NET runtime nor the Windows App SDK runtime.
 
+## Releases (maintainers)
+
+`.github/workflows/release.yml` builds and signs the package when you push a tag (`git tag v2.0.1; git push origin v2.0.1`). To sign every release with the **same** certificate (so users only trust it once), run this once:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File widget\Set-ReleaseSigning.ps1 -Repo <owner>/<repo>
+```
+
+It creates an exportable `CN=ClaudeLockWidget` certificate in `Cert:\CurrentUser\My`, exports it with a random password, stores both as the repository secrets `CLW_PFX_BASE64` and `CLW_PFX_PASSWORD` (via the GitHub CLI), and wipes the temporary files. The private key stays in your certificate store, so you can repeat the script (for example for a new repository). Never commit a `.pfx` - `.gitignore` already blocks them. Without the secrets the workflow falls back to a throw-away certificate that users would have to trust again for every release.
+
+`Build-Widget.ps1` itself creates a **non-exportable** local certificate when none exists; once you have run the script above it picks the newest `CN=ClaudeLockWidget` certificate with a private key, so local builds use the release certificate too.
+
 ## How the pieces fit
 
 1. Windows starts `ClaudeLockWidget.Provider.exe -RegisterProcessAsComServer` when a widget of this package needs its provider.
