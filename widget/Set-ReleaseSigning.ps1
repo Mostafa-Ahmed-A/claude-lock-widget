@@ -18,6 +18,8 @@
 .EXAMPLE
     powershell -ExecutionPolicy Bypass -File widget\Set-ReleaseSigning.ps1 -Repo Mostafa-Ahmed-A/claude-lock-widget
 #>
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingConvertToSecureStringWithPlainText', '',
+    Justification = 'The PFX password is generated in memory, used once to protect a temporary file and uploaded as a secret; it is never persisted.')]
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)][string]$Repo,                  # owner/name

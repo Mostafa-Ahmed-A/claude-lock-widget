@@ -42,15 +42,24 @@ jobs:
             widget/dist/ClaudeLockWidget.msix
             widget/dist/ClaudeLockWidget.cer
 
+  # Advisory static analysis: prints findings and a summary but never fails the build.
   lint:
     runs-on: windows-latest
-    continue-on-error: true   # advisory only
     steps:
       - uses: actions/checkout@v4
-      - name: PSScriptAnalyzer
+      - name: PSScriptAnalyzer (advisory)
         shell: powershell
         run: |
           Install-Module PSScriptAnalyzer -Force -Scope CurrentUser
-          Invoke-ScriptAnalyzer -Path src, widget -Recurse -Severity Error, Warning `
-            -ExcludeRule PSAvoidUsingWriteHost, PSUseShouldProcessForStateChangingFunctions, PSUseSingularNouns |
-            Format-Table -AutoSize | Out-String -Width 200
+          $exclude = 'PSAvoidUsingWriteHost', 'PSUseShouldProcessForStateChangingFunctions', 'PSUseSingularNouns'
+          # -Path accepts a single path, so analyse each folder on its own
+          $findings = @('src', 'widget') | ForEach-Object {
+            Invoke-ScriptAnalyzer -Path $_ -Recurse -Severity Error, Warning -ExcludeRule $exclude
+          }
+          $findings | Sort-Object Severity, ScriptName, Line |
+            Format-Table Severity, RuleName, ScriptName, Line, Message -AutoSize | Out-String -Width 250 | Write-Host
+          $errors = @($findings | Where-Object Severity -eq 'Error')
+          $warnings = @($findings).Count - $errors.Count
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "PSScriptAnalyzer: $($errors.Count) error(s), $warnings warning(s) (advisory)"
+          foreach ($e in $errors) { Write-Host "::warning::PSScriptAnalyzer error $($e.RuleName) in $($e.ScriptName):$($e.Line) - $($e.Message)" }
+          exit 0
